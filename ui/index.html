@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Video → Scratch</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#ebe6db; --surface:#f6f2e9; --surface2:#efe9dd;
+  --ink:#1d1b16; --muted:#7b7467; --line:#d8d0c1; --line2:#e4ddcf;
+  --accent:#c4572b; --accent-d:#a94621; --accent-soft:#f0d9cb;
+  --sage:#5f8a62; --amber:#c8962c;
+  --side:#1a1814; --side-ink:#ece5d6; --side-muted:#8f887a;
+  --serif:"Playfair Display","Iowan Old Style","Palatino Linotype",Georgia,serif;
+  --sans:"Inter","Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  --mono:"JetBrains Mono","Cascadia Mono",Consolas,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{font-family:var(--sans);background:var(--paper);color:var(--ink);font-size:14px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;overflow:hidden;user-select:none}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.app{display:grid;grid-template-columns:264px 1fr;grid-template-rows:minmax(0,1fr);height:100vh}
+.side{background:var(--side);color:var(--side-ink);padding:28px 24px 24px;display:flex;flex-direction:column;position:relative;
+  background-image:radial-gradient(120% 60% at 0% 0%,rgba(196,87,43,.16),transparent 60%)}
+.brand{display:flex;align-items:center;gap:12px}
+.mark{width:36px;height:36px;border-radius:10px;background:var(--accent);display:grid;place-items:center;
+  box-shadow:0 8px 20px -8px rgba(196,87,43,.8),inset 0 1px 0 rgba(255,255,255,.25)}
+.brand b{font-weight:600;font-size:15px;letter-spacing:-.01em;display:block}
+.brand span{font-size:12px;color:var(--side-muted)}
+.steps{margin-top:44px;display:flex;flex-direction:column;gap:6px;list-style:none}
+.step{display:flex;align-items:center;gap:14px;padding:11px 12px;border-radius:12px;color:var(--side-muted);transition:.25s}
+.step i{width:26px;height:26px;border-radius:50%;border:1px solid rgba(255,255,255,.18);display:grid;place-items:center;
+  font:500 12px var(--mono);font-style:normal;transition:.25s;flex:none}
+.step span{font-weight:500}
+.step.on{background:rgba(255,255,255,.06);color:#fff}
+.step.on i{background:var(--accent);border-color:var(--accent);color:#fff}
+.step.done i{background:rgba(255,255,255,.1);border-color:transparent;color:var(--side-ink)}
+.step.done{color:var(--side-ink)}
+.side .grow{flex:1}
+.tip{font-size:12px;color:var(--side-muted);line-height:1.55;margin-bottom:18px;padding:0 4px}
+.tip kbd{font:500 11px var(--mono);background:rgba(255,255,255,.08);padding:1px 6px;border-radius:5px;color:var(--side-ink)}
+.credits{border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:16px 16px 14px;background:rgba(255,255,255,.03)}
+.credits small{display:block;font:500 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--side-muted)}
+.credits strong{display:block;font:italic 500 26px/1.15 var(--serif);margin:6px 0 12px;color:#fff;letter-spacing:-.01em}
+.credits a{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;border-radius:10px;
+  background:rgba(255,255,255,.07);color:var(--side-ink);font-weight:500;font-size:12.5px;text-decoration:none;transition:.2s;cursor:pointer}
+.credits a:hover{background:var(--accent);color:#fff}
+.credits a svg{transition:transform .2s}
+.credits a:hover svg{transform:translate(2px,-2px)}
+.main{position:relative;overflow-y:auto;padding:28px 44px 26px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .4  0 0 0 0 .3  0 0 0 0 .2  0 0 0 .06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")}
+.main::-webkit-scrollbar{width:10px}.main::-webkit-scrollbar-thumb{background:var(--line);border-radius:10px;border:3px solid var(--paper)}
+h1{font:500 40px/1.06 var(--serif);letter-spacing:-.02em}
+h1 em{color:var(--accent);font-style:italic}
+.lead{color:var(--muted);margin-top:10px;font-size:15px;max-width:520px}
+.view{display:none;animation:rise .45s cubic-bezier(.2,.7,.2,1) both}
+.view.on{display:block}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:20px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.8),0 18px 40px -26px rgba(70,45,10,.35)}
+
+.drop{margin-top:30px;height:360px;border:1.5px dashed #c5bba8;border-radius:24px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;gap:6px;cursor:pointer;transition:.25s;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,rgba(255,255,255,.45),rgba(255,255,255,.15))}
+.drop:hover,.dragging .drop{border-color:var(--accent);background:rgba(196,87,43,.06);transform:translateY(-2px)}
+.film{width:92px;height:72px;margin-bottom:14px;position:relative;transition:transform .35s cubic-bezier(.2,.8,.2,1)}
+.drop:hover .film{transform:rotate(-4deg) scale(1.05)}
+.drop h2{font:500 26px var(--serif);letter-spacing:-.01em}
+.drop p{color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:8px;height:42px;padding:0 20px;border-radius:12px;font-weight:600;transition:.2s}
+.btn.dark{background:var(--ink);color:var(--surface);margin-top:16px}
+.btn.dark:hover{background:#000;transform:translateY(-1px)}
+.btn.ghost{border:1px solid var(--line);background:var(--surface)}
+.btn.ghost:hover{border-color:var(--ink)}
+.formats{margin-top:22px;font:400 11px var(--mono);color:#a39b8b;letter-spacing:.05em}
+.warn{margin-top:18px;padding:13px 16px;border-radius:14px;background:#f3dcd2;color:#7d2f12;border:1px solid #e6bfae;font-weight:500;display:none}
+.warn.on{display:block}
+
+.top{display:flex;align-items:flex-end;justify-content:space-between;gap:20px}
+.top h1{font-size:34px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) 352px;gap:22px;margin-top:18px;align-items:start}
+.stage{padding:14px}
+.vf{position:relative;aspect-ratio:4/3;background:#0d0c0a;border-radius:12px;overflow:hidden}
+.vf img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transition:opacity .25s}
+.vf img.stale{opacity:.45}
+.vf .c{position:absolute;width:18px;height:18px;border:2px solid rgba(255,255,255,.55);pointer-events:none}
+.vf .c.a{top:12px;left:12px;border-right:0;border-bottom:0}.vf .c.b{top:12px;right:12px;border-left:0;border-bottom:0}
+.vf .c.c{bottom:12px;left:12px;border-right:0;border-top:0}.vf .c.d{bottom:12px;right:12px;border-left:0;border-top:0}
+.vf .tag{position:absolute;left:36px;top:12px;font:500 10px var(--mono);letter-spacing:.12em;color:rgba(255,255,255,.7);
+  background:rgba(0,0,0,.45);padding:3px 8px;border-radius:6px;backdrop-filter:blur(4px)}
+.vf .spin{position:absolute;inset:0;display:none;place-items:center}
+.vf.load .spin{display:grid}
+.spin i{width:26px;height:26px;border-radius:50%;border:2px solid rgba(255,255,255,.25);border-top-color:#fff;animation:sp .8s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.meta{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 6px 2px}
+.meta .nm{min-width:0}
+.meta b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meta .chips{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+.pill{font:500 11px var(--mono);padding:3px 9px;border-radius:99px;background:var(--surface2);border:1px solid var(--line2);color:#5b5548}
+.swap{white-space:nowrap}
+.save{margin-top:14px;padding:14px 18px;display:flex;align-items:center;gap:14px}
+.save small{display:block;font:500 10px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.save .p{flex:1;min-width:0;font:400 12.5px var(--mono);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.save button{font-weight:600;font-size:13px;padding:8px 14px;border-radius:10px;border:1px solid var(--line);background:var(--paper);transition:.2s}
+.save button:hover{border-color:var(--ink)}
+
+.opts{padding:6px 22px 20px}
+.opt{padding:16px 0;border-bottom:1px solid var(--line2)}
+.opt:last-of-type{border-bottom:0}
+.lab{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+.lab b{font:500 10.5px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.lab span{font:500 12.5px var(--mono)}
+.chips2{display:flex;gap:6px}
+.chips2 button,.seg button{flex:1;height:36px;border-radius:10px;border:1px solid var(--line);background:var(--paper);font-weight:500;transition:.18s}
+.chips2 button:hover,.seg button:hover{border-color:#a49b88}
+.chips2 button.on,.seg button.on{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+.seg{display:flex;gap:6px}.seg button{font-size:12.5px}
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:20px;background:transparent;cursor:pointer;--p:50%}
+input[type=range]::-webkit-slider-runnable-track{height:4px;border-radius:4px;background:linear-gradient(90deg,var(--ink) var(--p),var(--line) var(--p))}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;margin-top:-8px;background:var(--surface);
+  border:2px solid var(--ink);box-shadow:0 3px 8px -2px rgba(0,0,0,.35);transition:transform .15s}
+input[type=range]:active::-webkit-slider-thumb{transform:scale(1.15)}
+.row{display:flex;align-items:center;justify-content:space-between;gap:14px}
+.row small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.sw{width:46px;height:26px;border-radius:99px;background:var(--line);position:relative;transition:.2s;flex:none}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.25);transition:.22s cubic-bezier(.3,.9,.3,1.2)}
+.sw.on{background:var(--ink)}.sw.on::after{transform:translateX(20px)}
+.sw.off{opacity:.4;pointer-events:none}
+.gap{display:flex;align-items:center;gap:16px}
+.gapviz{width:78px;height:50px;flex:none;border-radius:10px;background:var(--surface2);border:1px solid var(--line2);position:relative;overflow:hidden}
+.gapviz i{position:absolute;width:15px;height:9px;border-radius:3px;background:var(--accent);opacity:.9;transition:all .25s cubic-bezier(.3,.8,.3,1)}
+.gapviz i::after{content:"";position:absolute;left:2px;right:2px;top:2px;height:1.5px;background:rgba(255,255,255,.6)}
+
+.est{margin-top:14px;padding:16px 20px 16px}
+.est .big{display:flex;align-items:baseline;justify-content:space-between}
+.est .big b{font:500 30px var(--serif);letter-spacing:-.01em}
+.est .big span{color:var(--muted);font-size:12.5px}
+.meter{height:6px;border-radius:6px;background:var(--line);margin:12px 0 8px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;border-radius:6px;background:var(--sage);transition:width .4s,background .3s}
+.est p{font-size:12px;color:var(--muted);min-height:18px}
+.est p.bad{color:var(--accent-d);font-weight:500}
+.go{margin-top:16px;width:100%;height:54px;border-radius:15px;background:var(--accent);color:#fff8ef;font-weight:600;font-size:15.5px;
+  display:flex;align-items:center;justify-content:center;gap:10px;transition:.2s;box-shadow:0 14px 26px -12px rgba(196,87,43,.8),inset 0 1px 0 rgba(255,255,255,.22)}
+.go:hover{background:var(--accent-d);transform:translateY(-2px)}
+.go:active{transform:none}
+.go svg{transition:transform .2s}.go:hover svg{transform:translateX(3px)}
+
+.prog{margin-top:34px;padding:44px 48px 36px;text-align:left}
+.pct{font:500 150px/0.9 var(--serif);letter-spacing:-.04em;display:flex;align-items:flex-start}
+.pct small{font-size:44px;margin:14px 0 0 8px;color:var(--muted);font-weight:400}
+.bar{height:8px;background:var(--line);border-radius:8px;margin:30px 0 16px;overflow:hidden;position:relative}
+.bar i{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:8px;background:var(--accent);transition:width .25s linear}
+.bar i::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);animation:sh 1.4s infinite}
+@keyframes sh{from{transform:translateX(-100%)}to{transform:translateX(100%)}}
+.phase{display:flex;justify-content:space-between;align-items:center}
+.phase b{font-weight:600;font-size:16px}
+.phase span{color:var(--muted);font-size:13px}
+.log{margin-top:24px;max-height:120px;overflow:auto;font:400 11.5px/1.7 var(--mono);color:var(--muted);padding-top:16px;border-top:1px solid var(--line2);user-select:text}
+.log div::before{content:"› ";color:var(--accent)}
+
+.fin{margin-top:34px;padding:48px;text-align:left}
+.fin .ok{width:60px;height:60px;border-radius:50%;background:var(--sage);display:grid;place-items:center;box-shadow:0 14px 26px -12px rgba(95,138,98,.8);
+  animation:pop .6s cubic-bezier(.3,1.4,.4,1) both}
+@keyframes pop{from{transform:scale(.3);opacity:0}to{transform:none;opacity:1}}
+.fin h2{font:500 56px/1 var(--serif);letter-spacing:-.025em;margin:24px 0 8px}
+.fin h2 em{color:var(--accent)}
+.file{display:flex;align-items:center;gap:14px;margin:26px 0;padding:14px 16px;border-radius:14px;background:var(--surface2);border:1px solid var(--line2)}
+.file .ic{width:42px;height:42px;border-radius:11px;background:var(--accent);display:grid;place-items:center;flex:none}
+.file b{display:block;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file small{color:var(--muted);font:400 11.5px var(--mono);display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file>div{min-width:0}
+.how{color:var(--muted);margin-bottom:26px;line-height:1.7}
+.how b{color:var(--ink)}
+.acts{display:flex;gap:10px}
+.acts .btn{margin:0}
+
+.toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,20px);background:var(--ink);color:var(--surface);padding:11px 18px;border-radius:12px;
+  font-weight:500;opacity:0;pointer-events:none;transition:.3s;z-index:50}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+.veil{position:fixed;inset:0;background:rgba(196,87,43,.12);border:2px dashed var(--accent);margin:10px;border-radius:26px;display:none;place-items:center;z-index:40;pointer-events:none}
+.dragging .veil{display:grid}
+.veil b{font:italic 500 38px var(--serif);color:var(--accent-d)}
+@media (max-width:1020px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <aside class="side">
+    <div class="brand">
+      <div class="mark"><svg width="18" height="18" viewBox="0 0 18 18"><path d="M5 3.2v11.6c0 .6.7 1 1.2.6l8.6-5.8a.8.8 0 0 0 0-1.3L6.2 2.6c-.5-.4-1.2 0-1.2.6z" fill="#fff"/></svg></div>
+      <div><b>Video → Scratch</b><span>.sb3 converter</span></div>
+    </div>
+    <ul class="steps">
+      <li class="step on" data-s="1"><i>1</i><span>Video</span></li>
+      <li class="step" data-s="2"><i>2</i><span>Settings</span></li>
+      <li class="step" data-s="3"><i>3</i><span>Ready project</span></li>
+    </ul>
+    <div class="grow"></div>
+    <p class="tip">Each frame becomes a sprite costume, audio becomes a sound. Blocks are spaced far apart so they don't stick together. In Scratch: <kbd>File</kbd> → <kbd>Load from your computer</kbd>.</p>
+    <div class="credits">
+      <small>Credits</small>
+      <strong>TimShadow</strong>
+      <a id="scratchLink">Scratch profile
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10l6-6M5 4h5v5"/></svg>
+      </a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <section class="view on" id="vPick">
+      <h1>Any video — <em>into&nbsp;Scratch</em></h1>
+      <p class="lead">Drag a file into the window or choose one manually. You'll get a ready project that runs on the green flag.</p>
+      <div class="warn" id="noff">ffmpeg not found. Close the window and launch the app via <b>start.bat</b> — it will download everything automatically.</div>
+      <div class="drop" id="drop">
+        <div class="film">
+          <svg width="92" height="72" viewBox="0 0 92 72" fill="none">
+            <rect x="6" y="8" width="80" height="56" rx="10" fill="#1d1b16"/>
+            <g fill="#f6f2e9" opacity=".9"><rect x="12" y="14" width="6" height="8" rx="2"/><rect x="12" y="32" width="6" height="8" rx="2"/><rect x="12" y="50" width="6" height="8" rx="2"/>
+            <rect x="74" y="14" width="6" height="8" rx="2"/><rect x="74" y="32" width="6" height="8" rx="2"/><rect x="74" y="50" width="6" height="8" rx="2"/></g>
+            <rect x="24" y="14" width="44" height="44" rx="6" fill="#c4572b"/>
+            <path d="M42 28v16c0 1 1 1.500 1.800 1l12-8a1.200 1.200 0 0 0 0-2l-12-8c-.8-.5-1.800 0-1.800 1z" fill="#fff8ef"/>
+          </svg>
+        </div>
+        <h2>Drag a video here</h2>
+        <p>or</p>
+        <button class="btn dark" id="pickBtn">Choose file</button>
+        <div class="formats">MP4 · MKV · AVI · MOV · WEBM · GIF</div>
+      </div>
+    </section>
+
+    <section class="view" id="vCfg">
+      <div class="top">
+        <div><h1>Configure the <em>project</em></h1></div>
+        <button class="btn ghost swap" id="swapBtn">Another video</button>
+      </div>
+      <div class="grid">
+        <div>
+          <div class="card stage">
+            <div class="vf" id="vf">
+              <img id="pimg" alt="">
+              <span class="c a"></span><span class="c b"></span><span class="c c"></span><span class="c d"></span>
+              <span class="tag">SCRATCH STAGE 480×360</span>
+              <div class="spin"><i></i></div>
+            </div>
+            <div class="meta">
+              <div class="nm"><b id="fname">—</b>
+                <div class="chips" id="chips"></div></div>
+            </div>
+          </div>
+          <div class="card est">
+            <div class="big"><b id="estN">—</b><span id="estMB">—</span></div>
+            <div class="meter"><i id="meter"></i></div>
+            <p id="estNote"></p>
+          </div>
+          <div class="card save">
+            <div style="flex:1;min-width:0"><small>Save as</small><div class="p" id="outp">—</div></div>
+            <button id="saveBtn">Change</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="card opts">
+            <div class="opt">
+              <div class="lab"><b>Frames per second</b><span id="fpsv">15</span></div>
+              <div class="chips2" id="fpsChips"></div>
+            </div>
+            <div class="opt">
+              <div class="lab"><b>How to fit the frame</b></div>
+              <div class="seg" id="fit">
+                <button data-v="fit" class="on">Fit</button><button data-v="fill">Fill</button><button data-v="stretch">Stretch</button>
+              </div>
+            </div>
+            <div class="opt">
+              <div class="lab"><b>Image quality</b><span id="qv">60</span></div>
+              <input type="range" id="q" min="10" max="100" value="60">
+            </div>
+            <div class="opt">
+              <div class="row"><div><div class="lab" style="margin:0"><b>Sound</b></div><small id="sndhint">Add sound from video</small></div>
+                <div class="sw on" id="snd"></div></div>
+            </div>
+            <div class="opt">
+              <div class="lab"><b>Spacing between blocks</b><span id="spv">900 px</span></div>
+              <div class="gap">
+                <div class="gapviz" id="gapviz"><i></i><i></i><i></i><i></i></div>
+                <input type="range" id="sp" min="300" max="3000" step="100" value="900">
+              </div>
+            </div>
+          </div>
+          <button class="go" id="goBtn">Convert
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9h12M10 4l5 5-5 5"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="view" id="vProg">
+      <h1>Building the <em>project</em></h1>
+      <div class="card prog">
+        <div class="pct"><span id="pct">0</span><small>%</small></div>
+        <div class="bar"><i id="barfill"></i></div>
+        <div class="phase"><b id="phase">Preparing</b><button class="btn ghost" id="cancelBtn" style="height:36px">Cancel</button></div>
+        <div class="log" id="log"></div>
+      </div>
+    </section>
+
+    <section class="view" id="vDone">
+      <div class="card fin">
+        <div class="ok"><svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 14.500l5.500 5.500L22 9"/></svg></div>
+        <h2>Done<em>.</em></h2>
+        <p class="lead" style="margin:0">The project is built and saved next to the video.</p>
+        <div class="file">
+          <div class="ic"><svg width="22" height="22" viewBox="0 0 18 18"><path d="M5 3.2v11.6c0 .6.7 1 1.2.6l8.6-5.8a.8.8 0 0 0 0-1.3L6.2 2.6c-.5-.4-1.200 0-1.200.6z" fill="#fff"/></svg></div>
+          <div><b id="dname">—</b><small id="dinfo">—</small></div>
+        </div>
+        <p class="how">Open <b>scratch.mit.edu/create</b> → <b>File</b> → <b>Load from your computer</b>. Click the green flag. <b>Space</b> — stop, click the sprite — restart. Loading will take a moment: there are many costumes.</p>
+        <div class="acts">
+          <button class="btn dark" id="revealBtn">Show in folder</button>
+          <button class="btn ghost" id="againBtn">Another video</button>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+<div class="veil"><b>Drop to upload the video</b></div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const api = () => window.pywebview.api;
+const fmtNum = n => Math.round(n).toLocaleString('en-US');
+const fmtDur = s => { s = Math.round(s); const m = Math.floor(s/60); return m + ':' + String(s%60).padStart(2,'0'); };
+const fmtSize = b => b > 1e9 ? (b/1e9).toFixed(1)+' GB' : (b/1e6).toFixed(b>1e8?0:1)+' MB';
+const shorten = (p, n=58) => p.length <= n ? p : p.slice(0, 18) + '…' + p.slice(-(n-19));
+
+const S = { video:null, out:'', opts:{fps:15, fit:'fit', quality:60, sound:true, spacing:900}, poll:null, seq:0 };
+
+function view(name, step){
+  $$('.view').forEach(v => v.classList.toggle('on', v.id === name));
+  $$('.step').forEach(s => {
+    const n = +s.dataset.s;
+    s.classList.toggle('on', n === step);
+    s.classList.toggle('done', n < step);
+    s.firstElementChild.textContent = n < step ? '✓' : n;
+  });
+  $('.main').scrollTop = 0;
+}
+
+let toastT;
+function toast(msg){
+  const t = $('#toast'); t.textContent = msg; t.classList.add('on');
+  clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 3200);
+}
+
+async function pick(){
+  const p = await api().pick_video();
+  if (p) setVideo(p);
+}
+async function setVideo(path){
+  const info = await api().probe(path);
+  if (info.error){ toast(info.error); return; }
+  S.video = info; S.out = info.out;
+  $('#fname').textContent = info.name;
+  $('#chips').innerHTML = [
+    fmtDur(info.duration),
+    info.w ? info.w + '×' + info.h : null,
+    info.fps ? Math.round(info.fps) + ' fps' : null,
+    info.audio ? 'with sound' : 'no sound',
+    fmtSize(info.size)
+  ].filter(Boolean).map(t => `<span class="pill">${t}</span>`).join('');
+  const sw = $('#snd');
+  sw.classList.toggle('off', !info.audio);
+  if (!info.audio){ S.opts.sound = false; sw.classList.remove('on'); $('#sndhint').textContent = 'This video has no sound'; }
+  else { $('#sndhint').textContent = 'Add sound from video'; }
+  $('#outp').textContent = shorten(S.out); $('#outp').title = S.out;
+  $('#pimg').removeAttribute('src');
+  view('vCfg', 2);
+  refresh();
+}
+
+function fillRange(el){ el.style.setProperty('--p', ((el.value - el.min) / (el.max - el.min) * 100) + '%'); }
+function drawGap(){
+  const g = 3 + (S.opts.spacing - 300) / 2700 * 30;
+  const box = $('#gapviz'), w = box.clientWidth || 78, h = box.clientHeight || 50, cx = w/2, cy = h/2;
+  const pos = [[-1,-1],[1,-1],[-1,1],[1,1]];
+  $$('#gapviz i').forEach((el, i) => {
+    el.style.left = (cx + pos[i][0]*(g*0.9) - 7.5) + 'px';
+    el.style.top  = (cy + pos[i][1]*(g*0.55) - 4.5) + 'px';
+  });
+}
+function bindOpts(){
+  const fp = $('#fpsChips');
+  [6,10,15,20,30].forEach(v => {
+    const b = document.createElement('button'); b.textContent = v; b.dataset.v = v;
+    b.onclick = () => { S.opts.fps = v; syncFps(); refresh(); };
+    fp.appendChild(b);
+  });
+  function syncFps(){ $$('#fpsChips button').forEach(b => b.classList.toggle('on', +b.dataset.v === S.opts.fps)); $('#fpsv').textContent = S.opts.fps + ' fps'; }
+  syncFps();
+  $$('#fit button').forEach(b => b.onclick = () => {
+    S.opts.fit = b.dataset.v; $$('#fit button').forEach(x => x.classList.toggle('on', x === b)); refresh();
+  });
+  const q = $('#q'); fillRange(q);
+  q.oninput = () => { S.opts.quality = +q.value; $('#qv').textContent = q.value; fillRange(q); refresh(); };
+  $('#snd').onclick = () => { S.opts.sound = !S.opts.sound; $('#snd').classList.toggle('on', S.opts.sound); refresh(); };
+  const sp = $('#sp'); fillRange(sp);
+  sp.oninput = () => { S.opts.spacing = +sp.value; $('#spv').textContent = sp.value + ' px'; fillRange(sp); drawGap(); };
+  drawGap();
+}
+
+let rt;
+function refresh(){
+  clearTimeout(rt);
+  const frames = Math.max(1, Math.floor(S.video.duration * S.opts.fps));
+  $('#estN').textContent = fmtNum(frames) + ' frames';
+  $('#vf').classList.add('load'); $('#pimg').classList.add('stale');
+  rt = setTimeout(async () => {
+    const my = ++S.seq;
+    const r = await api().preview(S.video.path, S.opts);
+    if (my !== S.seq) return;
+    $('#vf').classList.remove('load'); $('#pimg').classList.remove('stale');
+    if (r.error){ toast(r.error); return; }
+    $('#pimg').src = r.img;
+    const mb = r.mb;
+    $('#estMB').textContent = '≈ ' + (mb < 10 ? mb.toFixed(1) : Math.round(mb)) + ' MB';
+    const m = $('#meter'); m.style.width = Math.min(100, mb / 50 * 100) + '%';
+    m.style.background = mb > 45 ? 'var(--accent)' : mb > 30 ? 'var(--amber)' : 'var(--sage)';
+    const note = $('#estNote');
+    note.classList.toggle('bad', mb > 45 || r.frames > 6000);
+    note.textContent = mb > 45 ? 'Over ~50 MB — it won\'t upload to Scratch. Reduce frames or quality.'
+      : r.frames > 6000 ? 'Too many costumes — Scratch will take a long time to open the project.'
+      : 'Estimated from the average frame; the actual file is usually a bit smaller.';
+  }, 280);
+}
+
+async function go(){
+  const ok = await api().start(S.video.path, S.out, S.opts);
+  if (!ok){ toast('Conversion already in progress'); return; }
+  $('#log').innerHTML = ''; setPct(0); $('#phase').textContent = 'Preparing';
+  view('vProg', 3);
+  S.poll = setInterval(tick, 160);
+}
+function setPct(p){ $('#pct').textContent = Math.round(p*100); $('#barfill').style.width = (p*100) + '%'; }
+async function tick(){
+  const s = await api().state();
+  setPct(s.progress); $('#phase').textContent = s.phase || 'Preparing';
+  const lg = $('#log');
+  if (lg.childElementCount !== s.log.length){
+    lg.innerHTML = s.log.map(l => `<div>${l.replace(/[<>&]/g, c => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[c]))}</div>`).join('');
+    lg.scrollTop = lg.scrollHeight;
+  }
+  if (s.running) return;
+  clearInterval(S.poll);
+  if (s.done){
+    $('#dname').textContent = S.out.split(/[\\/]/).pop();
+    $('#dinfo').textContent = fmtNum(s.result.costumes) + ' costumes · ' + s.result.mb.toFixed(1) + ' MB';
+    view('vDone', 4);
+  } else if (s.cancelled){ view('vCfg', 2); toast('Cancelled'); }
+  else { view('vCfg', 2); toast(s.error || 'Something went wrong'); }
+}
+
+function boot(){
+  bindOpts();
+  $('#pickBtn').onclick = e => { e.stopPropagation(); pick(); };
+  $('#drop').onclick = pick;
+  $('#swapBtn').onclick = () => { view('vPick', 1); };
+  $('#againBtn').onclick = () => { view('vPick', 1); };
+  $('#saveBtn').onclick = async () => { const p = await api().pick_save(S.out); if (p){ S.out = p; $('#outp').textContent = shorten(p); $('#outp').title = p; } };
+  $('#goBtn').onclick = go;
+  $('#cancelBtn').onclick = () => api().cancel();
+  $('#revealBtn').onclick = () => api().reveal(S.out);
+  $('#scratchLink').onclick = () => api().open_url('https://scratch.mit.edu/users/TimShadow55/');
+  api().init().then(r => { if (!r.ffmpeg) $('#noff').classList.add('on'); });
+}
+let dragN = 0;
+addEventListener('dragenter', e => { e.preventDefault(); dragN++; document.body.classList.add('dragging'); });
+addEventListener('dragleave', e => { dragN = Math.max(0, dragN-1); if (!dragN) document.body.classList.remove('dragging'); });
+addEventListener('dragover', e => e.preventDefault());
+addEventListener('drop', e => { e.preventDefault(); dragN = 0; document.body.classList.remove('dragging'); });
+addEventListener('resize', drawGap);
+
+window.App = { setVideo, toast };
+if (window.pywebview && window.pywebview.api) addEventListener('DOMContentLoaded', boot);
+else addEventListener('pywebviewready', boot);
+</script>
+</body>
+</html>
